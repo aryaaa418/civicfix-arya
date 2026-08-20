@@ -1,13 +1,14 @@
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
 
-function Map() {
-  const position = [19.0760, 72.8777]
+function Map({ position }) {
+  const defaultPosition = [19.0760, 72.8777]
+  const mapPosition = position || defaultPosition
 
   return (
     <MapContainer
-      center={position}
-      zoom={13}
+      center={mapPosition}
+      zoom={15}
       style={{ height: '400px', width: '100%' }}
     >
       <TileLayer
@@ -15,9 +16,9 @@ function Map() {
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
 
-      <Marker position={position}>
+      <Marker position={mapPosition}>
         <Popup>
-          📍 CivicFix Location
+          📍 CivicFix Complaint Location
         </Popup>
       </Marker>
     </MapContainer>
