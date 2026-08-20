@@ -67,14 +67,13 @@ function Report({ navigate, report, setReport }) {
     const file = event.target.files?.[0];
 
     if (file) {
-      setReport((current) => ({
-        ...current,
-        image: URL.createObjectURL(file),
-      }));
-      setError('');
+setReport((current) => ({
+  ...current,
+  image: URL.createObjectURL(file),
+}))
+setError('')
     }
-  };
-
+  }
   const locate = () => {
     setError('');
 
@@ -87,9 +86,9 @@ function Report({ navigate, report, setReport }) {
       (position) => {
         setReport((current) => ({
           ...current,
-          location: 'Current location detected',
-          latitude: position.coords.latitude,
-          longitude: position.coords.longitude,
+location: `Lat: ${position.coords.latitude.toFixed(6)}, Lng: ${position.coords.longitude.toFixed(6)}`,
+latitude: position.coords.latitude,
+longitude: position.coords.longitude,
         }));
       },
       () => {
@@ -110,10 +109,12 @@ function Report({ navigate, report, setReport }) {
       setLoading(false);
 
       setReport((current) => ({
-        ...current,
-        ...demoIssue,
-        analyzed: true,
-      }));
+  ...current,
+  category: demoIssue.category,
+  confidence: demoIssue.confidence,
+  priority: demoIssue.priority,
+  analyzed: true,
+}));
 
       navigate('result');
     }, 900);
@@ -324,8 +325,10 @@ function Result({ navigate, report, setReport }) {
 
               <strong>
                 <Icon name="pin" size={15} />
-                {report.location || demoIssue.location}
-              </strong>
+{report.latitude && report.longitude
+  ? `${report.latitude.toFixed(6)}, ${report.longitude.toFixed(6)}`
+  : report.location || 'Location not available'}
+                </strong>
             </div>
           </div>
 
