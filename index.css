@@ -1,0 +1,5 @@
+:root { font-family: 'Trebuchet MS', 'Avenir Next', sans-serif; color: #18333a; background: #f6f7f2; font-synthesis: none; text-rendering: optimizeLegibility; -webkit-font-smoothing: antialiased; --ink: #18333a; --muted: #64777a; --line: #dfe6df; --paper: #fbfcf8; --teal: #0d7a72; --teal-dark: #075b57; --coral: #ed765f; --yellow: #f3ca5d; --navy: #123d4a; }
+* { box-sizing: border-box; }
+body { margin: 0; min-width: 320px; }
+button, input, textarea { font: inherit; }
+button { cursor: pointer; }
