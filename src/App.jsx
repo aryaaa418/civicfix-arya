@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import './App.css'
 import Map from './components/Map'
+
 const demoIssue = {
   category: 'Pothole',
   confidence: 94,
@@ -29,102 +30,388 @@ function Icon({ name, size = 20 }) {
     menu: <><path d="M4 7h16M4 12h16M4 17h16"/></>,
     close: <><path d="m6 6 12 12M18 6 6 18"/></>,
   }
-  return <svg className="icon" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{paths[name]}</svg>
+
+  return (
+    <svg
+      className="icon"
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      {paths[name]}
+    </svg>
+  )
 }
 
-function Button({ children, variant = 'primary', icon, onClick, type = 'button', disabled = false }) {
-  return <button className={`button button-${variant}`} onClick={onClick} type={type} disabled={disabled}>{children}{icon && <Icon name={icon} size={17} />}</button>
+function Button({
+  children,
+  variant = 'primary',
+  icon,
+  onClick,
+  type = 'button',
+  disabled = false
+}) {
+  return (
+    <button
+      className={`button button-${variant}`}
+      onClick={onClick}
+      type={type}
+      disabled={disabled}
+    >
+      {children}
+      {icon && <Icon name={icon} size={17} />}
+    </button>
+  )
 }
 
 function Navbar({ page, navigate }) {
   const [open, setOpen] = useState(false)
-  return <header className="navbar">
-    <button className="brand" onClick={() => navigate('home')} aria-label="Go to CivicFix home"><span className="brand-mark"><Icon name="shield" size={19} /></span><span>Civic<span>Fix</span></span></button>
-    <button className="mobile-menu" onClick={() => setOpen(!open)} aria-label="Toggle navigation"><Icon name={open ? 'close' : 'menu'} /></button>
-    <nav className={open ? 'nav-links is-open' : 'nav-links'}>{navItems.map((item) => <button className={page === item.page ? 'active' : ''} key={item.page} onClick={() => { navigate(item.page); setOpen(false) }}>{item.label}</button>)}<span className="nav-divider" /><span className="nav-status"><i /> Services online</span></nav>
-  </header>
+
+  return (
+    <header className="navbar">
+      <button
+        className="brand"
+        onClick={() => navigate('home')}
+        aria-label="Go to CivicFix home"
+      >
+        <span className="brand-mark">
+          <Icon name="shield" size={19} />
+        </span>
+        <span>Civic<span>Fix</span></span>
+      </button>
+
+      <button
+        className="mobile-menu"
+        onClick={() => setOpen(!open)}
+        aria-label="Toggle navigation"
+      >
+        <Icon name={open ? 'close' : 'menu'} />
+      </button>
+
+      <nav className={open ? 'nav-links is-open' : 'nav-links'}>
+        {navItems.map((item) => (
+          <button
+            className={page === item.page ? 'active' : ''}
+            key={item.page}
+            onClick={() => {
+              navigate(item.page)
+              setOpen(false)
+            }}
+          >
+            {item.label}
+          </button>
+        ))}
+
+        <span className="nav-divider" />
+        <span className="nav-status">
+          <i /> Services online
+        </span>
+      </nav>
+    </header>
+  )
 }
 
 function Footer({ navigate }) {
-  return <footer><div className="footer-brand"><button className="brand" onClick={() => navigate('home')}><span className="brand-mark"><Icon name="shield" size={17} /></span><span>Civic<span>Fix</span></span></button><p>Make your city better, one report at a time.</p></div><div className="footer-links"><span>Built for better neighborhoods</span><span>Privacy · Accessibility · Support</span></div></footer>
+  return (
+    <footer>
+      <div className="footer-brand">
+        <button className="brand" onClick={() => navigate('home')}>
+          <span className="brand-mark">
+            <Icon name="shield" size={17} />
+          </span>
+          <span>Civic<span>Fix</span></span>
+        </button>
+
+        <p>Make your city better, one report at a time.</p>
+      </div>
+
+      <div className="footer-links">
+        <span>Built for better neighborhoods</span>
+        <span>Privacy · Accessibility · Support</span>
+      </div>
+    </footer>
+  )
 }
 
 function Home({ navigate }) {
-  const steps = [['01', 'Upload a photo', 'Show us what needs attention.'], ['02', 'AI detects the issue', 'We identify the right department.'], ['03', 'Location captured', 'Pinpoint the problem in seconds.'], ['04', 'Complaint sent', 'Your city takes it from here.']]
-  return <main>
-    <section className="hero-section page-pad"><div className="hero-copy"><p className="eyebrow"><span className="eyebrow-dot" /> Community-powered city care</p><h1>Report civic problems <em>easily.</em></h1><p className="hero-lede">CivicFix helps you turn a photo of a problem into action. Fast, clear, and built for the people who live here.</p><div className="hero-actions"><Button onClick={() => navigate('report')} icon="arrow">Report an issue</Button><Button variant="secondary" onClick={() => navigate('tracking')} icon="search">Track a complaint</Button></div><div className="trust-note"><span className="avatar-stack"><i>J</i><i>M</i><i>A</i></span><span><strong>12,400+</strong> residents making a difference</span></div></div><div className="hero-visual"><div className="photo-card"><div className="photo-image" /><div className="photo-label"><span className="label-pin"><Icon name="pin" size={14} /></span><span><strong>Issue spotted</strong><small>Market Street · San Francisco</small></span><span className="verified"><Icon name="check" size={15} /></span></div></div><div className="floating-card ai-float"><span className="float-icon"><Icon name="shield" size={17} /></span><span><strong>AI identified</strong><small>Pothole · 94% confidence</small></span></div><div className="floating-card response-float"><span className="response-number">24h</span><span>Average first<br />response</span></div></div></section>
-    <section className="stats-strip page-pad"><div><strong>12,400+</strong><span>Issues reported</span></div><div><strong>8,920</strong><span>Issues resolved</span></div><div><strong>72%</strong><span>Resolved in 7 days</span></div><div><strong>4.9/5</strong><span>Community rating</span></div></section>
-    <section className="how-section page-pad"><div className="section-heading"><div><p className="eyebrow">Simple by design</p><h2>From spotted to solved.</h2></div><p>Every report gets the right attention, without the runaround.</p></div><div className="steps-grid">{steps.map(([number, title, text], index) => <div className={`step ${index === 1 ? 'step-highlight' : ''}`} key={number}><span className="step-number">{number}</span><div className="step-icon"><Icon name={['camera', 'shield', 'pin', 'check'][index]} size={20} /></div><h3>{title}</h3><p>{text}</p></div>)}</div></section>
-    <section className="callout page-pad"><div><p className="eyebrow">Ready when you are</p><h2>See something? Say something.</h2></div><Button onClick={() => navigate('report')} icon="arrow">Start a report</Button></section>
-  </main>
+  const steps = [
+    ['01', 'Upload a photo', 'Show us what needs attention.'],
+    ['02', 'AI detects the issue', 'We identify the right department.'],
+    ['03', 'Location captured', 'Pinpoint the problem in seconds.'],
+    ['04', 'Complaint sent', 'Your city takes it from here.']
+  ]
+
+  return (
+    <main>
+      <section className="hero-section page-pad">
+        <div className="hero-copy">
+          <p className="eyebrow">
+            <span className="eyebrow-dot" />
+            Community-powered city care
+          </p>
+
+          <h1>
+            Report civic problems <em>easily.</em>
+          </h1>
+
+          <p className="hero-lede">
+            CivicFix helps you turn a photo of a problem into action. Fast,
+            clear, and built for the people who live here.
+          </p>
+
+          <div className="hero-actions">
+            <Button onClick={() => navigate('report')} icon="arrow">
+              Report an issue
+            </Button>
+
+            <Button
+              variant="secondary"
+              onClick={() => navigate('tracking')}
+              icon="search"
+            >
+              Track a complaint
+            </Button>
+          </div>
+
+          <div className="trust-note">
+            <span className="avatar-stack">
+              <i>J</i>
+              <i>M</i>
+              <i>A</i>
+            </span>
+
+            <span>
+              <strong>12,400+</strong> residents making a difference
+            </span>
+          </div>
+        </div>
+
+        <div className="hero-visual">
+          <div className="photo-card">
+            <div className="photo-image" />
+
+            <div className="photo-label">
+              <span className="label-pin">
+                <Icon name="pin" size={14} />
+              </span>
+
+              <span>
+                <strong>Issue spotted</strong>
+                <small>Market Street · San Francisco</small>
+              </span>
+
+              <span className="verified">
+                <Icon name="check" size={15} />
+              </span>
+            </div>
+          </div>
+
+          <div className="floating-card ai-float">
+            <span className="float-icon">
+              <Icon name="shield" size={17} />
+            </span>
+
+            <span>
+              <strong>AI identified</strong>
+              <small>Pothole · 94% confidence</small>
+            </span>
+          </div>
+
+          <div className="floating-card response-float">
+            <span className="response-number">24h</span>
+            <span>
+              Average first
+              <br />
+              response
+            </span>
+          </div>
+        </div>
+      </section>
+
+      <section className="stats-strip page-pad">
+        <div>
+          <strong>12,400+</strong>
+          <span>Issues reported</span>
+        </div>
+
+        <div>
+          <strong>8,920</strong>
+          <span>Issues resolved</span>
+        </div>
+
+        <div>
+          <strong>72%</strong>
+          <span>Resolved in 7 days</span>
+        </div>
+
+        <div>
+          <strong>4.9/5</strong>
+          <span>Community rating</span>
+        </div>
+      </section>
+
+      <section className="how-section page-pad">
+        <div className="section-heading">
+          <div>
+            <p className="eyebrow">Simple by design</p>
+            <h2>From spotted to solved.</h2>
+          </div>
+
+          <p>
+            Every report gets the right attention, without the runaround.
+          </p>
+        </div>
+
+        <div className="steps-grid">
+          {steps.map(([number, title, text], index) => (
+            <div
+              className={`step ${
+                index === 1 ? 'step-highlight' : ''
+              }`}
+              key={number}
+            >
+              <span className="step-number">{number}</span>
+
+              <div className="step-icon">
+                <Icon
+                  name={['camera', 'shield', 'pin', 'check'][index]}
+                  size={20}
+                />
+              </div>
+
+              <h3>{title}</h3>
+              <p>{text}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="callout page-pad">
+        <div>
+          <p className="eyebrow">Ready when you are</p>
+          <h2>See something? Say something.</h2>
+        </div>
+
+        <Button onClick={() => navigate('report')} icon="arrow">
+          Start a report
+        </Button>
+      </section>
+    </main>
+  )
 }
+
 function Report({ navigate, report, setReport }) {
-  const inputRef = useRef(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const inputRef = useRef(null)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
 
   const handleFile = (event) => {
-    const file = event.target.files?.[0];
+    const file = event.target.files?.[0]
 
     if (file) {
-setReport((current) => ({
-  ...current,
-  image: URL.createObjectURL(file),
-}))
-setError('')
+      setReport((current) => ({
+        ...current,
+        image: URL.createObjectURL(file),
+      }))
+
+      setError('')
     }
   }
+
+  // GET CURRENT LOCATION AND CONVERT IT TO A REAL ADDRESS
   const locate = () => {
-    setError('');
+    setError('')
 
     if (!navigator.geolocation) {
-      setError('Geolocation is not supported by your browser.');
-      return;
+      setError('Geolocation is not supported by your browser.')
+      return
     }
 
     navigator.geolocation.getCurrentPosition(
-      (position) => {
-        setReport((current) => ({
-          ...current,
-location: `Lat: ${position.coords.latitude.toFixed(6)}, Lng: ${position.coords.longitude.toFixed(6)}`,
-latitude: position.coords.latitude,
-longitude: position.coords.longitude,
-        }));
+      async (position) => {
+        const { latitude, longitude } = position.coords
+
+        try {
+          const response = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}`
+          )
+
+          if (!response.ok) {
+            throw new Error('Failed to find address')
+          }
+
+          const data = await response.json()
+
+          setReport((current) => ({
+            ...current,
+            location:
+              data.display_name ||
+              `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`,
+            latitude,
+            longitude,
+          }))
+        } catch (error) {
+          setReport((current) => ({
+            ...current,
+            location: `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`,
+            latitude,
+            longitude,
+          }))
+
+          setError(
+            'Could not convert coordinates to an address. Coordinates saved.'
+          )
+        }
       },
       () => {
-        setError('Unable to get your location. Please allow location access.');
+        setError(
+          'Unable to get your location. Please allow location access.'
+        )
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0,
       }
-    );
-  };
+    )
+  }
 
   const analyze = () => {
     if (!report.image) {
-      setError('Add a photo first.');
-      return;
+      setError('Add a photo first.')
+      return
     }
 
-    setLoading(true);
+    setLoading(true)
 
     setTimeout(() => {
-      setLoading(false);
+      setLoading(false)
 
       setReport((current) => ({
-  ...current,
-  category: demoIssue.category,
-  confidence: demoIssue.confidence,
-  priority: demoIssue.priority,
-  analyzed: true,
-}));
+        ...current,
+        category: demoIssue.category,
+        confidence: demoIssue.confidence,
+        priority: demoIssue.priority,
+        analyzed: true,
+      }))
 
-      navigate('result');
-    }, 900);
-  };
+      navigate('result')
+    }, 900)
+  }
 
   return (
     <main className="subpage">
       <section className="page-pad narrow-header">
         <p className="eyebrow">New report</p>
+
         <h1>What needs fixing?</h1>
+
         <p>
           Give us the details and we'll route your report to the right people.
         </p>
@@ -204,24 +491,24 @@ longitude: position.coords.longitude,
           >
             {loading ? 'Analyzing photo...' : 'Analyze issue'}
           </Button>
-
         </div>
       </section>
     </main>
-  );
+  )
 }
+
 function Result({ navigate, report, setReport }) {
-  const [submitted, setSubmitted] = useState(false);
+  const [submitted, setSubmitted] = useState(false)
 
   const submit = () => {
-    setSubmitted(true);
+    setSubmitted(true)
 
     setReport((current) => ({
       ...current,
       submitted: true,
       id: demoIssue.id,
-    }));
-  };
+    }))
+  }
 
   if (submitted) {
     return (
@@ -256,15 +543,15 @@ function Result({ navigate, report, setReport }) {
           <Button
             variant="secondary"
             onClick={() => {
-              setReport({});
-              navigate('report');
+              setReport({})
+              navigate('report')
             }}
           >
             Report another issue
           </Button>
         </div>
       </main>
-    );
+    )
   }
 
   return (
@@ -278,6 +565,7 @@ function Result({ navigate, report, setReport }) {
           Review the details before sending your report to the city.
         </p>
       </section>
+
       <section className="result-layout page-pad">
         <div className="result-image">
           <img
@@ -325,10 +613,8 @@ function Result({ navigate, report, setReport }) {
 
               <strong>
                 <Icon name="pin" size={15} />
-{report.latitude && report.longitude
-  ? `${report.latitude.toFixed(6)}, ${report.longitude.toFixed(6)}`
-  : report.location || 'Location not available'}
-                </strong>
+                {report.location || 'Location not available'}
+              </strong>
             </div>
           </div>
 
@@ -353,22 +639,192 @@ function Result({ navigate, report, setReport }) {
         </div>
       </section>
     </main>
-  );
+  )
 }
-function Tracking({ report}){
+
+function Tracking({ report }) {
   const [query, setQuery] = useState(report.id || '')
   const [searched, setSearched] = useState(Boolean(report.submitted))
   const complaint = { ...demoIssue, ...report }
-  const statuses = ['Submitted', 'Verified', 'Assigned', 'In Progress', 'Resolved']
-  return <main className="subpage tracking-page"><section className="page-pad narrow-header"><p className="eyebrow">Complaint tracking</p><h1>Follow it through.</h1><p>Stay in the loop from your first report to a cleaner, safer city.</p></section><section className="tracking-search page-pad"><div className="search-field"><Icon name="search" size={19} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Enter your complaint ID" /><Button onClick={() => setSearched(Boolean(query.trim()))}>Search</Button></div><p>Try demo ID: <button onClick={() => { setQuery(demoIssue.id); setSearched(true) }}>{demoIssue.id}</button></p></section>{searched ? <section className="tracking-card page-pad"><div className="tracking-card-top"><div><span className="status-pill"><i /> In progress</span><h2>{complaint.category}</h2><p>{complaint.description || demoIssue.description}</p></div><div className="tracking-id"><span>Complaint ID</span><strong>{query || demoIssue.id}</strong></div></div><div className="tracking-meta"><span><Icon name="pin" size={16} /> {complaint.location || demoIssue.location}</span><span><Icon name="clock" size={16} /> Updated today at 9:42 AM</span></div><div className="timeline">{statuses.map((status, index) => <div className={`timeline-step ${index < 3 ? 'complete' : ''} ${index === 3 ? 'current' : ''}`} key={status}><span className="timeline-dot">{index < 3 ? <Icon name="check" size={13} /> : index === 3 ? <i /> : ''}</span><span>{status}</span>{index < statuses.length - 1 && <b />}</div>)}</div><div className="status-message"><span className="message-icon"><Icon name="shield" size={18} /></span><p><strong>A city crew has been assigned.</strong><br />They are scheduled to inspect this issue within 2 business days.</p></div></section> : <div className="empty-state"><span><Icon name="search" size={25} /></span><h2>Enter an ID to see your report</h2><p>Your complaint timeline and latest updates will appear here.</p></div>}</main>
+  const statuses = [
+    'Submitted',
+    'Verified',
+    'Assigned',
+    'In Progress',
+    'Resolved'
+  ]
+
+  return (
+    <main className="subpage tracking-page">
+      <section className="page-pad narrow-header">
+        <p className="eyebrow">Complaint tracking</p>
+        <h1>Follow it through.</h1>
+        <p>
+          Stay in the loop from your first report to a cleaner, safer city.
+        </p>
+      </section>
+
+      <section className="tracking-search page-pad">
+        <div className="search-field">
+          <Icon name="search" size={19} />
+
+          <input
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder="Enter your complaint ID"
+          />
+
+          <Button onClick={() => setSearched(Boolean(query.trim()))}>
+            Search
+          </Button>
+        </div>
+
+        <p>
+          Try demo ID:{' '}
+          <button
+            onClick={() => {
+              setQuery(demoIssue.id)
+              setSearched(true)
+            }}
+          >
+            {demoIssue.id}
+          </button>
+        </p>
+      </section>
+
+      {searched ? (
+        <section className="tracking-card page-pad">
+          <div className="tracking-card-top">
+            <div>
+              <span className="status-pill">
+                <i /> In progress
+              </span>
+
+              <h2>{complaint.category}</h2>
+
+              <p>
+                {complaint.description || demoIssue.description}
+              </p>
+            </div>
+
+            <div className="tracking-id">
+              <span>Complaint ID</span>
+              <strong>{query || demoIssue.id}</strong>
+            </div>
+          </div>
+
+          <div className="tracking-meta">
+            <span>
+              <Icon name="pin" size={16} />{' '}
+              {complaint.location || demoIssue.location}
+            </span>
+
+            <span>
+              <Icon name="clock" size={16} /> Updated today at 9:42 AM
+            </span>
+          </div>
+
+          <div className="timeline">
+            {statuses.map((status, index) => (
+              <div
+                className={`timeline-step ${
+                  index < 3 ? 'complete' : ''
+                } ${index === 3 ? 'current' : ''}`}
+                key={status}
+              >
+                <span className="timeline-dot">
+                  {index < 3 ? (
+                    <Icon name="check" size={13} />
+                  ) : index === 3 ? (
+                    <i />
+                  ) : (
+                    ''
+                  )}
+                </span>
+
+                <span>{status}</span>
+
+                {index < statuses.length - 1 && <b />}
+              </div>
+            ))}
+          </div>
+
+          <div className="status-message">
+            <span className="message-icon">
+              <Icon name="shield" size={18} />
+            </span>
+
+            <p>
+              <strong>A city crew has been assigned.</strong>
+              <br />
+              They are scheduled to inspect this issue within 2 business days.
+            </p>
+          </div>
+        </section>
+      ) : (
+        <div className="empty-state">
+          <span>
+            <Icon name="search" size={25} />
+          </span>
+
+          <h2>Enter an ID to see your report</h2>
+
+          <p>
+            Your complaint timeline and latest updates will appear here.
+          </p>
+        </div>
+      )}
+    </main>
+  )
 }
+
 function App() {
-  const [page, setPage] = useState(window.location.hash.slice(1) || 'home')
+  const [page, setPage] = useState(
+    window.location.hash.slice(1) || 'home'
+  )
+
   const [report, setReport] = useState({})
-  useEffect(() => { const onHash = () => setPage(window.location.hash.slice(1) || 'home'); window.addEventListener('hashchange', onHash); return () => window.removeEventListener('hashchange', onHash) }, [])
-  const navigate = (nextPage) => { window.location.hash = nextPage }
-  const content = page === 'report' ? <Report navigate={navigate} report={report} setReport={setReport} /> : page === 'result' ? <Result navigate={navigate} report={report} setReport={setReport} /> : page === 'tracking' ? <Tracking report={report} /> : <Home navigate={navigate} />
-  return <><Navbar page={page} navigate={navigate} />{content}<Footer navigate={navigate} /></>
+
+  useEffect(() => {
+    const onHash = () =>
+      setPage(window.location.hash.slice(1) || 'home')
+
+    window.addEventListener('hashchange', onHash)
+
+    return () =>
+      window.removeEventListener('hashchange', onHash)
+  }, [])
+
+  const navigate = (nextPage) => {
+    window.location.hash = nextPage
+  }
+
+  const content =
+    page === 'report' ? (
+      <Report
+        navigate={navigate}
+        report={report}
+        setReport={setReport}
+      />
+    ) : page === 'result' ? (
+      <Result
+        navigate={navigate}
+        report={report}
+        setReport={setReport}
+      />
+    ) : page === 'tracking' ? (
+      <Tracking report={report} />
+    ) : (
+      <Home navigate={navigate} />
+    )
+
+  return (
+    <>
+      <Navbar page={page} navigate={navigate} />
+      {content}
+      <Footer navigate={navigate} />
+    </>
+  )
 }
 
 export default App
