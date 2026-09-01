@@ -8,7 +8,6 @@ const demoIssue = {
   priority: 'High',
   location: '1240 Market Street, San Francisco',
   description: 'Deep pothole affecting the right lane near the crosswalk.',
-  id: 'CF-2025-1842',
 }
 
 const navItems = [
@@ -19,16 +18,56 @@ const navItems = [
 
 function Icon({ name, size = 20 }) {
   const paths = {
-    arrow: <><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></>,
-    pin: <><path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></>,
-    camera: <><path d="M4 7h3l1.5-2h7L17 7h3v11H4Z"/><circle cx="12" cy="12.5" r="3"/></>,
-    clock: <><circle cx="12" cy="12" r="8"/><path d="M12 8v4l2.5 2"/></>,
-    check: <path d="m5 12 4 4L19 6"/>,
-    search: <><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4 4"/></>,
-    upload: <><path d="M12 16V4m0 0L7 9m5-5 5 5"/><path d="M5 15v4h14v-4"/></>,
-    shield: <path d="M12 3 5 6v5c0 4.5 3 8 7 10 4-2 7-5.5 7-10V6l-7-3Z"/>,
-    menu: <><path d="M4 7h16M4 12h16M4 17h16"/></>,
-    close: <><path d="m6 6 12 12M18 6 6 18"/></>,
+    arrow: (
+      <>
+        <path d="M5 12h14" />
+        <path d="m13 6 6 6-6 6" />
+      </>
+    ),
+    pin: (
+      <>
+        <path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z" />
+        <circle cx="12" cy="10" r="2.5" />
+      </>
+    ),
+    camera: (
+      <>
+        <path d="M4 7h3l1.5-2h7L17 7h3v11H4Z" />
+        <circle cx="12" cy="12.5" r="3" />
+      </>
+    ),
+    clock: (
+      <>
+        <circle cx="12" cy="12" r="8" />
+        <path d="M12 8v4l2.5 2" />
+      </>
+    ),
+    check: <path d="m5 12 4 4L19 6" />,
+    search: (
+      <>
+        <circle cx="10.5" cy="10.5" r="6.5" />
+        <path d="m16 16 4 4" />
+      </>
+    ),
+    upload: (
+      <>
+        <path d="M12 16V4m0 0L7 9m5-5 5 5" />
+        <path d="M5 15v4h14v-4" />
+      </>
+    ),
+    shield: (
+      <path d="M12 3 5 6v5c0 4.5 3 8 7 10 4-2 7-5.5 7-10V6l-7-3Z" />
+    ),
+    menu: (
+      <>
+        <path d="M4 7h16M4 12h16M4 17h16" />
+      </>
+    ),
+    close: (
+      <>
+        <path d="m6 6 12 12M18 6 6 18" />
+      </>
+    ),
   }
 
   return (
@@ -55,7 +94,7 @@ function Button({
   icon,
   onClick,
   type = 'button',
-  disabled = false
+  disabled = false,
 }) {
   return (
     <button
@@ -83,7 +122,10 @@ function Navbar({ page, navigate }) {
         <span className="brand-mark">
           <Icon name="shield" size={19} />
         </span>
-        <span>Civic<span>Fix</span></span>
+
+        <span>
+          Civic<span>Fix</span>
+        </span>
       </button>
 
       <button
@@ -109,6 +151,7 @@ function Navbar({ page, navigate }) {
         ))}
 
         <span className="nav-divider" />
+
         <span className="nav-status">
           <i /> Services online
         </span>
@@ -125,7 +168,10 @@ function Footer({ navigate }) {
           <span className="brand-mark">
             <Icon name="shield" size={17} />
           </span>
-          <span>Civic<span>Fix</span></span>
+
+          <span>
+            Civic<span>Fix</span>
+          </span>
         </button>
 
         <p>Make your city better, one report at a time.</p>
@@ -144,7 +190,7 @@ function Home({ navigate }) {
     ['01', 'Upload a photo', 'Show us what needs attention.'],
     ['02', 'AI detects the issue', 'We identify the right department.'],
     ['03', 'Location captured', 'Pinpoint the problem in seconds.'],
-    ['04', 'Complaint sent', 'Your city takes it from here.']
+    ['04', 'Complaint sent', 'Your city takes it from here.'],
   ]
 
   return (
@@ -225,6 +271,7 @@ function Home({ navigate }) {
 
           <div className="floating-card response-float">
             <span className="response-number">24h</span>
+
             <span>
               Average first
               <br />
@@ -305,7 +352,6 @@ function Home({ navigate }) {
     </main>
   )
 }
-
 function Report({ navigate, report, setReport }) {
   const inputRef = useRef(null)
   const [loading, setLoading] = useState(false)
@@ -314,17 +360,31 @@ function Report({ navigate, report, setReport }) {
   const handleFile = (event) => {
     const file = event.target.files?.[0]
 
-    if (file) {
-      setReport((current) => ({
-        ...current,
-        image: URL.createObjectURL(file),
-      }))
+    if (!file) return
 
-      setError('')
+    if (!file.type.startsWith('image/')) {
+      setError('Please select a valid image file.')
+      return
     }
+
+    if (file.size > 10 * 1024 * 1024) {
+      setError('Image must be smaller than 10MB.')
+      return
+    }
+
+    const previewUrl = URL.createObjectURL(file)
+
+    setReport((current) => ({
+      ...current,
+      image: previewUrl,
+      imageFile: file,
+      analyzed: false,
+      submitted: false,
+    }))
+
+    setError('')
   }
 
-  // GET CURRENT LOCATION AND CONVERT IT TO A REAL ADDRESS
   const locate = () => {
     setError('')
 
@@ -356,7 +416,7 @@ function Report({ navigate, report, setReport }) {
             latitude,
             longitude,
           }))
-        } catch (error) {
+        } catch {
           setReport((current) => ({
             ...current,
             location: `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`,
@@ -383,13 +443,16 @@ function Report({ navigate, report, setReport }) {
   }
 
   const analyze = () => {
-    if (!report.image) {
-      setError('Add a photo first.')
+    if (!report.imageFile) {
+      setError('Please upload a photo first.')
       return
     }
 
     setLoading(true)
+    setError('')
 
+    // Frontend-only demo analysis.
+    // Backend AI will replace this later.
     setTimeout(() => {
       setLoading(false)
 
@@ -419,7 +482,6 @@ function Report({ navigate, report, setReport }) {
 
       <section className="report-layout page-pad">
         <div className="form-panel">
-
           <div
             className={`upload-zone ${report.image ? 'has-image' : ''}`}
             onClick={() => inputRef.current?.click()}
@@ -443,6 +505,7 @@ function Report({ navigate, report, setReport }) {
               onChange={handleFile}
               type="file"
               accept="image/*"
+              hidden
             />
           </div>
 
@@ -501,13 +564,19 @@ function Result({ navigate, report, setReport }) {
   const [submitted, setSubmitted] = useState(false)
 
   const submit = () => {
-    setSubmitted(true)
+    const generatedId =
+      report.id ||
+      `CF-${new Date().getFullYear()}-${Math.floor(
+        1000 + Math.random() * 9000
+      )}`
 
     setReport((current) => ({
       ...current,
       submitted: true,
-      id: demoIssue.id,
+      id: generatedId,
     }))
+
+    setSubmitted(true)
   }
 
   if (submitted) {
@@ -528,7 +597,7 @@ function Result({ navigate, report, setReport }) {
 
         <div className="complaint-id">
           <span>Complaint ID</span>
-          <strong>{demoIssue.id}</strong>
+          <strong>{report.id}</strong>
           <small>Save this ID to track your report</small>
         </div>
 
@@ -569,10 +638,7 @@ function Result({ navigate, report, setReport }) {
       <section className="result-layout page-pad">
         <div className="result-image">
           <img
-            src={
-              report.image ||
-              'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&w=1000&q=85'
-            }
+            src={report.image}
             alt="Uploaded civic issue"
           />
 
@@ -594,7 +660,7 @@ function Result({ navigate, report, setReport }) {
             </div>
 
             <span className="confidence">
-              {report.confidence || demoIssue.confidence}%
+              {report.confidence ?? demoIssue.confidence}%
               <small>confidence</small>
             </span>
           </div>
@@ -645,20 +711,38 @@ function Result({ navigate, report, setReport }) {
 function Tracking({ report }) {
   const [query, setQuery] = useState(report.id || '')
   const [searched, setSearched] = useState(Boolean(report.submitted))
-  const complaint = { ...demoIssue, ...report }
+
+  const complaint = {
+    ...demoIssue,
+    ...report,
+  }
+
   const statuses = [
     'Submitted',
     'Verified',
     'Assigned',
     'In Progress',
-    'Resolved'
+    'Resolved',
   ]
+
+  const handleSearch = () => {
+    const trimmedQuery = query.trim()
+
+    if (!trimmedQuery) {
+      setSearched(false)
+      return
+    }
+
+    setSearched(true)
+  }
 
   return (
     <main className="subpage tracking-page">
       <section className="page-pad narrow-header">
         <p className="eyebrow">Complaint tracking</p>
+
         <h1>Follow it through.</h1>
+
         <p>
           Stay in the loop from your first report to a cleaner, safer city.
         </p>
@@ -671,25 +755,32 @@ function Tracking({ report }) {
           <input
             value={query}
             onChange={(event) => setQuery(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter') {
+                handleSearch()
+              }
+            }}
             placeholder="Enter your complaint ID"
           />
 
-          <Button onClick={() => setSearched(Boolean(query.trim()))}>
+          <Button onClick={handleSearch}>
             Search
           </Button>
         </div>
 
-        <p>
-          Try demo ID:{' '}
-          <button
-            onClick={() => {
-              setQuery(demoIssue.id)
-              setSearched(true)
-            }}
-          >
-            {demoIssue.id}
-          </button>
-        </p>
+        {report.id && (
+          <p>
+            Your complaint ID:{' '}
+            <button
+              onClick={() => {
+                setQuery(report.id)
+                setSearched(true)
+              }}
+            >
+              {report.id}
+            </button>
+          </p>
+        )}
       </section>
 
       {searched ? (
@@ -709,18 +800,18 @@ function Tracking({ report }) {
 
             <div className="tracking-id">
               <span>Complaint ID</span>
-              <strong>{query || demoIssue.id}</strong>
+              <strong>{query}</strong>
             </div>
           </div>
 
           <div className="tracking-meta">
             <span>
               <Icon name="pin" size={16} />{' '}
-              {complaint.location || demoIssue.location}
+              {complaint.location || 'Location not available'}
             </span>
 
             <span>
-              <Icon name="clock" size={16} /> Updated today at 9:42 AM
+              <Icon name="clock" size={16} /> Updated today
             </span>
           </div>
 
@@ -828,3 +919,4 @@ function App() {
 }
 
 export default App
+      
