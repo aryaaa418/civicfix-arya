@@ -14,32 +14,36 @@ const pool = new Pool({
   password: process.env.PGPASSWORD,
   host: process.env.PGHOST,
   database: process.env.PGDATABASE,
-  port: process.env.PGPORT || 5432,
-  ssl: {
-    rejectUnauthorized: false,
-  },
+  port: Number(process.env.PGPORT) || 5432,
 });
 
 app.get("/", (req, res) => {
-  res.json({ message: "CivicFix backend is running!" });
+  res.json({
+    message: "CivicFix backend is running!",
+  });
 });
 
 app.get("/test-db", async (req, res) => {
   try {
     const result = await pool.query("SELECT NOW()");
+
     res.json({
-      message: "Neon database connected successfully!",
+      message: "Database connected successfully!",
       time: result.rows[0].now,
     });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({
-      message: "Database connection failed",
-    });
+    console.error("Database error:", error.message);
+
+res.status(500).json({
+  message: "Database connection failed",
+  error: error.message,
+});
   }
 });
+const complaintsRoutes = require("./routes/complaints");
 
-const PORT = process.env.PORT || 5000;
+app.use("/api/complaints", complaintsRoutes);
+const PORT = Number(process.env.PORT) || 5000;
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
