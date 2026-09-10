@@ -1,14 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import './App.css'
-import Map from './components/Map'
 
-const demoIssue = {
-  category: 'Pothole',
-  confidence: 94,
-  priority: 'High',
-  location: '1240 Market Street, San Francisco',
-  description: 'Deep pothole affecting the right lane near the crosswalk.',
-}
+const API_URL = 'https://eradicate-atlantic-setting.ngrok-free.dev'
 
 const navItems = [
   { label: 'Home', page: 'home' },
@@ -207,8 +200,8 @@ function Home({ navigate }) {
           </h1>
 
           <p className="hero-lede">
-            CivicFix helps you turn a photo of a problem into action. Fast,
-            clear, and built for the people who live here.
+            CivicFix helps you turn a photo of a problem into action.
+            Fast, clear, and built for the people who live here.
           </p>
 
           <div className="hero-actions">
@@ -224,82 +217,60 @@ function Home({ navigate }) {
               Track a complaint
             </Button>
           </div>
-
-          <div className="trust-note">
-            <span className="avatar-stack">
-              <i>J</i>
-              <i>M</i>
-              <i>A</i>
-            </span>
-
-            <span>
-              <strong>12,400+</strong> residents making a difference
-            </span>
-          </div>
         </div>
 
         <div className="hero-visual">
           <div className="photo-card">
-            <div className="photo-image" />
-
-            <div className="photo-label">
-              <span className="label-pin">
-                <Icon name="pin" size={14} />
-              </span>
-
-              <span>
-                <strong>Issue spotted</strong>
-                <small>Market Street · San Francisco</small>
-              </span>
-
-              <span className="verified">
-                <Icon name="check" size={15} />
-              </span>
-            </div>
-          </div>
-
-          <div className="floating-card ai-float">
-            <span className="float-icon">
-              <Icon name="shield" size={17} />
-            </span>
-
-            <span>
-              <strong>AI identified</strong>
-              <small>Pothole · 94% confidence</small>
-            </span>
-          </div>
-
-          <div className="floating-card response-float">
-            <span className="response-number">24h</span>
-
-            <span>
-              Average first
-              <br />
-              response
-            </span>
+            <img
+              className="hero-project-image"
+              src={`${import.meta.env.BASE_URL}civicfix-hero.jpg`}
+              alt="CivicFix AI-powered civic issue reporting"
+            />
           </div>
         </div>
       </section>
 
-      <section className="stats-strip page-pad">
-        <div>
-          <strong>12,400+</strong>
-          <span>Issues reported</span>
+      <section className="project-info-strip page-pad">
+        <div className="project-info-item">
+          <span className="project-info-icon">
+            <Icon name="camera" size={22} />
+          </span>
+
+          <div>
+            <strong>AI-Powered Detection</strong>
+            <p>
+              CivicFix analyzes uploaded photos to identify civic problems
+              such as potholes, garbage, damaged roads and water leakage.
+            </p>
+          </div>
         </div>
 
-        <div>
-          <strong>8,920</strong>
-          <span>Issues resolved</span>
+        <div className="project-info-item">
+          <span className="project-info-icon">
+            <Icon name="pin" size={22} />
+          </span>
+
+          <div>
+            <strong>Smart Location</strong>
+            <p>
+              The user's location is captured and converted into a readable
+              address to make every complaint easier to locate.
+            </p>
+          </div>
         </div>
 
-        <div>
-          <strong>72%</strong>
-          <span>Resolved in 7 days</span>
-        </div>
+        <div className="project-info-item">
+          <span className="project-info-icon">
+            <Icon name="shield" size={22} />
+          </span>
 
-        <div>
-          <strong>4.9/5</strong>
-          <span>Community rating</span>
+          <div>
+            <strong>Smart Complaint Routing</strong>
+            <p>
+              AI helps identify the issue and route the complaint toward the
+              appropriate civic department.
+            </p>
+          </div>
         </div>
       </section>
 
@@ -352,8 +323,14 @@ function Home({ navigate }) {
     </main>
   )
 }
+
+/* ============================================================
+   REPORT PAGE
+   ============================================================ */
+
 function Report({ navigate, report, setReport }) {
   const inputRef = useRef(null)
+
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
@@ -363,23 +340,28 @@ function Report({ navigate, report, setReport }) {
     if (!file) return
 
     if (!file.type.startsWith('image/')) {
-      setError('Please select a valid image file.')
+      setError('Please upload an image file.')
       return
     }
 
     if (file.size > 10 * 1024 * 1024) {
-      setError('Image must be smaller than 10MB.')
+      setError('Please upload an image smaller than 10MB.')
       return
     }
 
-    const previewUrl = URL.createObjectURL(file)
-
     setReport((current) => ({
       ...current,
-      image: previewUrl,
-      imageFile: file,
+      file,
+      image: URL.createObjectURL(file),
+
+      category: '',
+      confidence: null,
+      priority: '',
+      description: '',
       analyzed: false,
       submitted: false,
+      id: '',
+      isCivicIssue: null,
     }))
 
     setError('')
@@ -389,61 +371,183 @@ function Report({ navigate, report, setReport }) {
     setError('')
 
     if (!navigator.geolocation) {
-      setError('Geolocation is not supported by your browser.')
+      setError('Geolocation is not supported on this device.')
       return
     }
+
+    setReport((current) => ({
+      ...current,
+      location: 'Getting your location...',
+    }))
 
     navigator.geolocation.getCurrentPosition(
       async (position) => {
         const { latitude, longitude } = position.coords
 
+        setReport((current) => ({
+          ...current,
+          latitude,
+          longitude,
+          location: 'Finding address...',
+        }))
+
         try {
           const response = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}`
+            `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1`
           )
 
           if (!response.ok) {
-            throw new Error('Failed to find address')
+            throw new Error('Unable to find address')
           }
 
           const data = await response.json()
+          const address = data.address || {}
+
+          const readableLocation = [
+            address.road,
+            address.neighbourhood ||
+              address.suburb ||
+              address.village ||
+              address.town ||
+              address.city,
+            address.state,
+            address.postcode,
+          ]
+            .filter(Boolean)
+            .join(', ')
 
           setReport((current) => ({
             ...current,
+            latitude,
+            longitude,
             location:
+              readableLocation ||
               data.display_name ||
-              `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`,
-            latitude,
-            longitude,
+              `${latitude.toFixed(5)}, ${longitude.toFixed(5)}`,
           }))
-        } catch {
+        } catch (error) {
+          console.error('Reverse geocoding failed:', error)
+
           setReport((current) => ({
             ...current,
-            location: `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`,
             latitude,
             longitude,
+            location: `${latitude.toFixed(5)}, ${longitude.toFixed(5)}`,
           }))
-
-          setError(
-            'Could not convert coordinates to an address. Coordinates saved.'
-          )
         }
       },
       () => {
-        setError(
-          'Unable to get your location. Please allow location access.'
-        )
-      },
-      {
-        enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 0,
+        setError('Unable to access your location.')
+
+        setReport((current) => ({
+          ...current,
+          location: '',
+        }))
       }
     )
   }
 
-  const analyze = () => {
-    if (!report.imageFile) {
+  /* ============================================================
+     CIVIC ISSUE DETECTION
+     ============================================================ */
+
+  const detectNonCivicIssue = (aiResult, data) => {
+    const explicitFalseValues = [
+      aiResult?.is_civic_issue,
+      aiResult?.isCivicIssue,
+      aiResult?.civic_issue,
+      aiResult?.civicIssue,
+      data?.is_civic_issue,
+      data?.isCivicIssue,
+    ]
+
+    if (explicitFalseValues.some((value) => value === false)) {
+      return true
+    }
+
+    const categoryText = String(
+      aiResult?.category ||
+        aiResult?.issue ||
+        aiResult?.type ||
+        ''
+    ).toLowerCase()
+
+    const descriptionText = String(
+      aiResult?.description || ''
+    ).toLowerCase()
+
+    const messageText = String(
+      aiResult?.message || ''
+    ).toLowerCase()
+
+    const combinedText = `
+      ${categoryText}
+      ${descriptionText}
+      ${messageText}
+    `.toLowerCase()
+
+    const nonCivicKeywords = [
+      'not a civic issue',
+      'not civic',
+      'non-civic',
+      'non civic',
+      'not a civic problem',
+      'not related to civic',
+      'not related to public infrastructure',
+      'not a public infrastructure',
+      'no civic issue',
+      'no civic problem',
+      'invalid image',
+      'irrelevant image',
+      'unrelated image',
+      'not relevant',
+      'not applicable',
+      'cannot identify a civic',
+      'does not show a civic',
+      'does not appear to show a civic',
+      'does not depict a civic',
+      'not related to municipal',
+      'not a municipal issue',
+      'not a public issue',
+    ]
+
+    if (
+      nonCivicKeywords.some((keyword) =>
+        combinedText.includes(keyword)
+      )
+    ) {
+      return true
+    }
+
+    const nonCivicCategories = [
+      'not a civic issue',
+      'non-civic',
+      'non civic',
+      'invalid',
+      'irrelevant',
+      'unknown',
+      'none',
+      'not applicable',
+      'other',
+    ]
+
+    if (
+      nonCivicCategories.some((category) =>
+        categoryText === category
+      )
+    ) {
+      return true
+    }
+
+    return false
+  }
+
+  /* ============================================================
+     AI ANALYSIS
+     ============================================================ */
+
+  const analyze = async () => {
+    if (!report.file) {
       setError('Please upload a photo first.')
       return
     }
@@ -451,21 +555,95 @@ function Report({ navigate, report, setReport }) {
     setLoading(true)
     setError('')
 
-    // Frontend-only demo analysis.
-    // Backend AI will replace this later.
-    setTimeout(() => {
-      setLoading(false)
+    try {
+      const formData = new FormData()
+
+      formData.append('image', report.file)
+
+      if (report.description) {
+        formData.append('description', report.description)
+      }
+
+      if (report.latitude != null) {
+        formData.append('latitude', String(report.latitude))
+      }
+
+      if (report.longitude != null) {
+        formData.append('longitude', String(report.longitude))
+      }
+
+      console.log('Sending image to CivicFix AI...')
+
+      const response = await fetch(`${API_URL}/analyze`, {
+        method: 'POST',
+        body: formData,
+      })
+
+      console.log('AI response status:', response.status)
+
+      if (!response.ok) {
+        const errorText = await response.text()
+        console.error('AI server error:', errorText)
+
+        throw new Error(`AI server error: ${response.status}`)
+      }
+
+      const data = await response.json()
+
+      console.log('AI response:', data)
+
+      const aiResult = data.result || data.ai || data
+
+      const isNonCivic = detectNonCivicIssue(aiResult, data)
+
+      if (isNonCivic) {
+        console.log('Non-civic image detected.')
+
+        const nonCivicResult = {
+          ...aiResult,
+          category: 'Not a Civic Issue',
+          confidence: 0,
+          priority: 'None',
+
+          description:
+            'This image does not appear to show a civic problem. Please upload a photo of a pothole, garbage, damaged road, water leakage, broken streetlight, or another public infrastructure issue.',
+
+          isCivicIssue: false,
+          analyzed: true,
+          submitted: false,
+          id: '',
+          aiResponse: data,
+        }
+
+        setReport((current) => ({
+          ...current,
+          ...nonCivicResult,
+        }))
+
+        navigate('result')
+        return
+      }
 
       setReport((current) => ({
         ...current,
-        category: demoIssue.category,
-        confidence: demoIssue.confidence,
-        priority: demoIssue.priority,
+        ...aiResult,
+        isCivicIssue: true,
+        aiResponse: data,
         analyzed: true,
+        submitted: false,
+        id: '',
       }))
 
       navigate('result')
-    }, 900)
+    } catch (err) {
+      console.error('AI analysis failed:', err)
+
+      setError(
+        'AI analysis failed. Please make sure your AI backend is running.'
+      )
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -476,15 +654,24 @@ function Report({ navigate, report, setReport }) {
         <h1>What needs fixing?</h1>
 
         <p>
-          Give us the details and we'll route your report to the right people.
+          Give us the details and we'll route your report to the right
+          people.
         </p>
       </section>
 
       <section className="report-layout page-pad">
         <div className="form-panel">
           <div
-            className={`upload-zone ${report.image ? 'has-image' : ''}`}
+            className={`upload-zone ${
+              report.image ? 'has-image' : ''
+            }`}
             onClick={() => inputRef.current?.click()}
+            role="button"
+            tabIndex="0"
+            onKeyDown={(event) =>
+              event.key === 'Enter' &&
+              inputRef.current?.click()
+            }
           >
             {report.image ? (
               <img src={report.image} alt="Selected civic issue" />
@@ -495,7 +682,11 @@ function Report({ navigate, report, setReport }) {
                 </span>
 
                 <strong>Upload a photo</strong>
-                <span>or take one with your camera</span>
+
+                <span>
+                  Choose from gallery/files or take a photo
+                </span>
+
                 <small>JPG, PNG up to 10MB</small>
               </>
             )}
@@ -505,7 +696,6 @@ function Report({ navigate, report, setReport }) {
               onChange={handleFile}
               type="file"
               accept="image/*"
-              hidden
             />
           </div>
 
@@ -513,7 +703,7 @@ function Report({ navigate, report, setReport }) {
             <div>
               <label>Location</label>
 
-              <p>
+              <p className={report.location ? 'location-set' : ''}>
                 <Icon name="pin" size={16} />
                 {report.location || 'No location selected'}
               </p>
@@ -552,371 +742,563 @@ function Report({ navigate, report, setReport }) {
             disabled={loading}
             icon="arrow"
           >
-            {loading ? 'Analyzing photo...' : 'Analyze issue'}
+            {loading ? (
+              <>
+                <span className="spinner" />
+                Analyzing with AI...
+              </>
+            ) : (
+              'Analyze issue'
+            )}
           </Button>
+
+          <p className="privacy-note">
+            <Icon name="shield" size={14} />
+            Your report helps improve your neighborhood.
+          </p>
         </div>
+
+        <aside className="side-note">
+          <span className="side-note-icon">
+            <Icon name="shield" size={22} />
+          </span>
+
+          <h3>Smart routing</h3>
+
+          <p>
+            Our AI looks at your photo and details to identify the issue
+            and send it to the right city team.
+          </p>
+
+          <div className="side-rule" />
+
+          <p className="small-copy">
+            Your location is only used to find the right service area.
+          </p>
+        </aside>
       </section>
     </main>
   )
-}
+                }
+/* ============================================================
+RESULT PAGE
+============================================================ */
 
 function Result({ navigate, report, setReport }) {
-  const [submitted, setSubmitted] = useState(false)
+const [submitting, setSubmitting] = useState(false)
+const [error, setError] = useState('')
 
-  const submit = () => {
-    const generatedId =
-      report.id ||
-      `CF-${new Date().getFullYear()}-${Math.floor(
-        1000 + Math.random() * 9000
-      )}`
+const isNonCivic = report.isCivicIssue === false
 
-    setReport((current) => ({
-      ...current,
-      submitted: true,
-      id: generatedId,
-    }))
+const handleSubmit = async () => {
+if (isNonCivic) return
 
-    setSubmitted(true)
-  }
+setSubmitting(true)
+setError('')
 
-  if (submitted) {
-    return (
-      <main className="subpage success-page">
-        <div className="success-mark">
-          <Icon name="check" size={32} />
+try {
+  /*
+   * The AI analysis is already complete.
+   * Keep the existing report data and create a local complaint ID
+   * so the tracking page can display the submitted complaint.
+   */
+  const complaintId =
+    report.id ||
+    `CF-${Date.now().toString().slice(-6)}`
+
+  setReport((current) => ({
+    ...current,
+    submitted: true,
+    id: complaintId,
+  }))
+
+  navigate('tracking')
+} catch (err) {
+  console.error('Complaint submission failed:', err)
+  setError('Unable to submit the complaint. Please try again.')
+} finally {
+  setSubmitting(false)
+}
+
+}
+
+const uploadAnother = () => {
+setReport((current) => ({
+...current,
+file: null,
+image: '',
+category: '',
+confidence: null,
+priority: '',
+description: '',
+analyzed: false,
+submitted: false,
+id: '',
+isCivicIssue: null,
+aiResponse: null,
+}))
+
+navigate('report')
+
+}
+
+if (!report.analyzed) {
+return (
+<main className="subpage">
+<section className="page-pad narrow-header">
+<p className="eyebrow">No analysis yet</p>
+<h1>Upload a photo first.</h1>
+
+      <Button
+        onClick={() => navigate('report')}
+        icon="arrow"
+      >
+        Go to report
+      </Button>
+    </section>
+  </main>
+)
+
+}
+
+return (
+<main className="subpage">
+<section className="page-pad narrow-header">
+<p className="eyebrow">
+{isNonCivic ? 'Photo checked' : 'AI analysis complete'}
+</p>
+
+    <h1>
+      {isNonCivic
+        ? 'This is not a civic issue.'
+        : 'We found an issue.'}
+    </h1>
+
+    <p>
+      {isNonCivic
+        ? 'Please upload a photo showing a public or civic problem.'
+        : 'Review the details below before submitting your complaint.'}
+    </p>
+  </section>
+
+  <section className="result-layout page-pad">
+    <div className="result-image-card">
+      {report.image ? (
+        <img
+          src={report.image}
+          alt="Analyzed report"
+        />
+      ) : (
+        <div className="result-image-placeholder">
+          <Icon name="camera" size={28} />
+        </div>
+      )}
+    </div>
+
+    <div className="result-panel">
+      <div className="result-top">
+        <div>
+          <span className="result-label">Category</span>
+          <h2>
+            {report.category || 'Civic Issue'}
+          </h2>
         </div>
 
-        <p className="eyebrow">Complaint submitted</p>
+        <div className="result-status">
+          <span
+            className={
+              isNonCivic
+                ? 'status-dot status-dot-warning'
+                : 'status-dot'
+            }
+          />
+          {isNonCivic ? 'Not civic' : 'Detected'}
+        </div>
+      </div>
 
-        <h1>Thanks for speaking up.</h1>
+      <div className="result-stats">
+        <div>
+          <span>Confidence</span>
+          <strong>
+            {report.confidence != null
+              ? `${report.confidence}%`
+              : '—'}
+          </strong>
+        </div>
+
+        <div>
+          <span>Priority</span>
+          <strong>
+            {report.priority || '—'}
+          </strong>
+        </div>
+
+        <div>
+          <span>Location</span>
+          <strong>
+            {report.location || 'Not selected'}
+          </strong>
+        </div>
+      </div>
+
+      <div className="result-description">
+        <span className="result-label">
+          AI description
+        </span>
 
         <p>
-          Your report is now with the city team. We'll keep you posted
-          as it moves forward.
+          {report.description ||
+            'No description was generated.'}
         </p>
+      </div>
 
-        <div className="complaint-id">
-          <span>Complaint ID</span>
-          <strong>{report.id}</strong>
-          <small>Save this ID to track your report</small>
-        </div>
+      {error && (
+        <p className="form-error">
+          {error}
+        </p>
+      )}
 
-        <div className="hero-actions">
+      {isNonCivic ? (
+        <div className="result-actions">
           <Button
-            onClick={() => navigate('tracking')}
-            icon="arrow"
+            onClick={uploadAnother}
+            icon="upload"
           >
-            Track complaint
+            Upload another photo
           </Button>
 
           <Button
             variant="secondary"
-            onClick={() => {
-              setReport({})
-              navigate('report')
-            }}
+            onClick={() => navigate('home')}
           >
-            Report another issue
+            Back to home
           </Button>
         </div>
-      </main>
-    )
-  }
+      ) : (
+        <div className="result-actions">
+          {!report.submitted ? (
+            <Button
+              onClick={handleSubmit}
+              disabled={submitting}
+              icon="check"
+            >
+              {submitting
+                ? 'Submitting...'
+                : 'Submit complaint'}
+            </Button>
+          ) : (
+            <Button
+              onClick={() => navigate('tracking')}
+              icon="arrow"
+            >
+              Track complaint
+            </Button>
+          )}
 
-  return (
-    <main className="subpage">
-      <section className="page-pad narrow-header">
-        <p className="eyebrow">AI analysis complete</p>
-
-        <h1>Here's what we found.</h1>
-
-        <p>
-          Review the details before sending your report to the city.
-        </p>
-      </section>
-
-      <section className="result-layout page-pad">
-        <div className="result-image">
-          <img
-            src={report.image}
-            alt="Uploaded civic issue"
-          />
-
-          <span className="image-tag">
-            <Icon name="check" size={14} />
-            Photo analyzed
-          </span>
-        </div>
-
-        <div className="result-details">
-          <div className="result-category">
-            <span className="category-icon">
-              <Icon name="camera" size={22} />
-            </span>
-
-            <div>
-              <span>Detected category</span>
-              <h2>{report.category || demoIssue.category}</h2>
-            </div>
-
-            <span className="confidence">
-              {report.confidence ?? demoIssue.confidence}%
-              <small>confidence</small>
-            </span>
-          </div>
-
-          <div className="detail-grid">
-            <div>
-              <span>Priority</span>
-
-              <strong className="priority-high">
-                ● {report.priority || demoIssue.priority}
-              </strong>
-            </div>
-
-            <div>
-              <span>Location</span>
-
-              <strong>
-                <Icon name="pin" size={15} />
-                {report.location || 'Location not available'}
-              </strong>
-            </div>
-          </div>
-
-          <div className="description-preview">
-            <span>Your description</span>
-
-            <p>
-              {report.description || demoIssue.description}
-            </p>
-          </div>
-
-          <Button onClick={submit} icon="arrow">
-            Submit complaint
-          </Button>
-
-          <button
-            className="text-button"
+          <Button
+            variant="secondary"
             onClick={() => navigate('report')}
           >
-            ← Edit report
-          </button>
-        </div>
-      </section>
-    </main>
-  )
-}
-
-function Tracking({ report }) {
-  const [query, setQuery] = useState(report.id || '')
-  const [searched, setSearched] = useState(Boolean(report.submitted))
-
-  const complaint = {
-    ...demoIssue,
-    ...report,
-  }
-
-  const statuses = [
-    'Submitted',
-    'Verified',
-    'Assigned',
-    'In Progress',
-    'Resolved',
-  ]
-
-  const handleSearch = () => {
-    const trimmedQuery = query.trim()
-
-    if (!trimmedQuery) {
-      setSearched(false)
-      return
-    }
-
-    setSearched(true)
-  }
-
-  return (
-    <main className="subpage tracking-page">
-      <section className="page-pad narrow-header">
-        <p className="eyebrow">Complaint tracking</p>
-
-        <h1>Follow it through.</h1>
-
-        <p>
-          Stay in the loop from your first report to a cleaner, safer city.
-        </p>
-      </section>
-
-      <section className="tracking-search page-pad">
-        <div className="search-field">
-          <Icon name="search" size={19} />
-
-          <input
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            onKeyDown={(event) => {
-              if (event.key === 'Enter') {
-                handleSearch()
-              }
-            }}
-            placeholder="Enter your complaint ID"
-          />
-
-          <Button onClick={handleSearch}>
-            Search
+            Edit report
           </Button>
         </div>
+      )}
 
-        {report.id && (
-          <p>
-            Your complaint ID:{' '}
-            <button
-              onClick={() => {
-                setQuery(report.id)
-                setSearched(true)
-              }}
-            >
-              {report.id}
-            </button>
-          </p>
-        )}
-      </section>
+      <div className="result-note">
+        <Icon name="shield" size={15} />
 
-      {searched ? (
-        <section className="tracking-card page-pad">
-          <div className="tracking-card-top">
-            <div>
-              <span className="status-pill">
-                <i /> In progress
-              </span>
+        <span>
+          {isNonCivic
+            ? 'Only genuine civic issues can be submitted.'
+            : 'Please review your information before submitting.'}
+        </span>
+      </div>
+    </div>
+  </section>
+</main>
 
-              <h2>{complaint.category}</h2>
+)
+}
 
-              <p>
-                {complaint.description || demoIssue.description}
-              </p>
-            </div>
+/* ============================================================
+TRACKING PAGE
+============================================================ */
 
-            <div className="tracking-id">
-              <span>Complaint ID</span>
-              <strong>{query}</strong>
-            </div>
-          </div>
+function Tracking({ navigate, report }) {
+const complaintId =
+report.id || 'Not submitted yet'
 
-          <div className="tracking-meta">
-            <span>
-              <Icon name="pin" size={16} />{' '}
-              {complaint.location || 'Location not available'}
-            </span>
+const steps = [
+{
+title: 'Complaint submitted',
+text: 'Your civic complaint has been received.',
+done: Boolean(report.submitted),
+},
+{
+title: 'Under review',
+text: 'The responsible civic department will review the issue.',
+done: false,
+},
+{
+title: 'Action in progress',
+text: 'The issue will be addressed by the concerned team.',
+done: false,
+},
+{
+title: 'Resolved',
+text: 'The reported issue has been fixed.',
+done: false,
+},
+]
 
-            <span>
-              <Icon name="clock" size={16} /> Updated today
-            </span>
-          </div>
+if (!report.submitted) {
+return (
+<main className="subpage">
+<section className="page-pad narrow-header">
+<p className="eyebrow">Complaint tracking</p>
 
-          <div className="timeline">
-            {statuses.map((status, index) => (
-              <div
-                className={`timeline-step ${
-                  index < 3 ? 'complete' : ''
-                } ${index === 3 ? 'current' : ''}`}
-                key={status}
-              >
-                <span className="timeline-dot">
-                  {index < 3 ? (
-                    <Icon name="check" size={13} />
-                  ) : index === 3 ? (
-                    <i />
-                  ) : (
-                    ''
-                  )}
-                </span>
+      <h1>No complaint to track yet.</h1>
 
-                <span>{status}</span>
+      <p>
+        Submit a civic issue first and your complaint status
+        will appear here.
+      </p>
 
-                {index < statuses.length - 1 && <b />}
-              </div>
-            ))}
-          </div>
+      <Button
+        onClick={() => navigate('report')}
+        icon="arrow"
+      >
+        Report an issue
+      </Button>
+    </section>
+  </main>
+)
 
-          <div className="status-message">
-            <span className="message-icon">
-              <Icon name="shield" size={18} />
-            </span>
+}
 
-            <p>
-              <strong>A city crew has been assigned.</strong>
-              <br />
-              They are scheduled to inspect this issue within 2 business days.
-            </p>
-          </div>
-        </section>
-      ) : (
-        <div className="empty-state">
-          <span>
-            <Icon name="search" size={25} />
+return (
+<main className="subpage">
+<section className="page-pad narrow-header">
+<p className="eyebrow">Complaint tracking</p>
+
+    <h1>Track your complaint.</h1>
+
+    <p>
+      Your report has been submitted successfully.
+    </p>
+  </section>
+
+  <section className="tracking-layout page-pad">
+    <div className="tracking-card">
+      <div className="tracking-header">
+        <div>
+          <span className="result-label">
+            Complaint ID
           </span>
 
-          <h2>Enter an ID to see your report</h2>
+          <h2>{complaintId}</h2>
+        </div>
+
+        <span className="tracking-badge">
+          Submitted
+        </span>
+      </div>
+
+      <div className="tracking-issue">
+        <div className="tracking-thumb">
+          {report.image ? (
+            <img
+              src={report.image}
+              alt="Reported issue"
+            />
+          ) : (
+            <Icon name="camera" size={22} />
+          )}
+        </div>
+
+        <div>
+          <strong>
+            {report.category || 'Civic Issue'}
+          </strong>
 
           <p>
-            Your complaint timeline and latest updates will appear here.
+            {report.location ||
+              'Location not available'}
           </p>
         </div>
-      )}
-    </main>
+      </div>
+
+      <div className="tracking-timeline">
+        {steps.map((step, index) => (
+          <div
+            className={`timeline-item ${
+              step.done ? 'timeline-done' : ''
+            }`}
+            key={step.title}
+          >
+            <div className="timeline-marker">
+              {step.done ? (
+                <Icon name="check" size={15} />
+              ) : (
+                index + 1
+              )}
+            </div>
+
+            <div>
+              <strong>{step.title}</strong>
+              <p>{step.text}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+
+    <aside className="side-note">
+      <span className="side-note-icon">
+        <Icon name="pin" size={22} />
+      </span>
+
+      <h3>Reported location</h3>
+
+      <p>
+        {report.location ||
+          'No readable address was captured.'}
+      </p>
+
+      {report.latitude != null &&
+        report.longitude != null && (
+          <p className="small-copy">
+            Coordinates: {report.latitude.toFixed(5)},{' '}
+            {report.longitude.toFixed(5)}
+          </p>
+        )}
+
+      <div className="side-rule" />
+
+      <p className="small-copy">
+        CivicFix uses your location to help identify the
+        appropriate service area.
+      </p>
+    </aside>
+  </section>
+
+  <section className="page-pad result-bottom-actions">
+    <Button
+      variant="secondary"
+      onClick={() => navigate('report')}
+      icon="camera"
+    >
+      Report another issue
+    </Button>
+
+    <Button
+      variant="secondary"
+      onClick={() => navigate('home')}
+    >
+      Back to home
+    </Button>
+  </section>
+</main>
+
+)
+}
+
+/* ============================================================
+APP
+============================================================ */
+
+function App() {
+const [page, setPage] = useState('home')
+
+const [report, setReport] = useState({
+file: null,
+image: '',
+location: '',
+latitude: null,
+longitude: null,
+
+description: '',
+
+category: '',
+confidence: null,
+priority: '',
+
+analyzed: false,
+submitted: false,
+
+id: '',
+isCivicIssue: null,
+
+aiResponse: null,
+
+})
+
+const navigate = (nextPage) => {
+setPage(nextPage)
+
+window.scrollTo({
+  top: 0,
+  behavior: 'smooth',
+})
+
+}
+
+useEffect(() => {
+const handlePopState = () => {
+setPage(
+window.location.hash
+? window.location.hash.replace('#', '')
+: 'home'
+)
+}
+
+return () => {
+  window.removeEventListener(
+    'popstate',
+    handlePopState
   )
 }
 
-function App() {
-  const [page, setPage] = useState(
-    window.location.hash.slice(1) || 'home'
-  )
+}, [])
 
-  const [report, setReport] = useState({})
+return (
+<div className="app">
+<Navbar
+page={page}
+navigate={navigate}
+/>
 
-  useEffect(() => {
-    const onHash = () =>
-      setPage(window.location.hash.slice(1) || 'home')
+  {page === 'home' && (
+    <Home navigate={navigate} />
+  )}
 
-    window.addEventListener('hashchange', onHash)
+  {page === 'report' && (
+    <Report
+      navigate={navigate}
+      report={report}
+      setReport={setReport}
+    />
+  )}
 
-    return () =>
-      window.removeEventListener('hashchange', onHash)
-  }, [])
+  {page === 'result' && (
+    <Result
+      navigate={navigate}
+      report={report}
+      setReport={setReport}
+    />
+  )}
 
-  const navigate = (nextPage) => {
-    window.location.hash = nextPage
-  }
+  {page === 'tracking' && (
+    <Tracking
+      navigate={navigate}
+      report={report}
+    />
+  )}
 
-  const content =
-    page === 'report' ? (
-      <Report
-        navigate={navigate}
-        report={report}
-        setReport={setReport}
-      />
-    ) : page === 'result' ? (
-      <Result
-        navigate={navigate}
-        report={report}
-        setReport={setReport}
-      />
-    ) : page === 'tracking' ? (
-      <Tracking report={report} />
-    ) : (
-      <Home navigate={navigate} />
-    )
+  <Footer navigate={navigate} />
+</div>
 
-  return (
-    <>
-      <Navbar page={page} navigate={navigate} />
-      {content}
-      <Footer navigate={navigate} />
-    </>
-  )
+)
 }
 
 export default App
-      
